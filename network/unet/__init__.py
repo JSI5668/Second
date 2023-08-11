@@ -22,4 +22,6 @@ from .UNet_3Plus import UNet_3Plus_my
 from .unet_model import UNet_chae
 from .unet_model import encoder_my_2
 from .unet_model import decoder_my_2
-from .unet_model import UNet_chae_2
+# from .unet_model import UNet_chae_2
+from .UNet_3Plus import UNet_3Plus_DeepSup_CGM
+from .UNet_2Plus import UNet_2Plus

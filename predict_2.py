@@ -8,7 +8,7 @@ import argparse
 import numpy as np
 
 from torch.utils import data
-from datasets import VOCSegmentation, Cityscapes, cityscapes, Camvid, Dacon_segmentation, Camvid_Edge, Camvid_sample, Kitti_Edge, Kitti_sample
+from datasets import VOCSegmentation, Cityscapes, cityscapes, Camvid, Camvid_Edge, Camvid_sample, Kitti_Edge, Kitti_sample
 from torchvision import transforms as T
 from metrics import StreamSegMetrics
 from main import validate
@@ -16,6 +16,7 @@ from main import get_dataset
 from network.unet import UNet
 from torch import optim
 from network.unet import UNet_my_2, EdgeNet
+import segmentation_models_pytorch as smp
 
 import torch
 import torch.nn as nn
@@ -32,7 +33,7 @@ def get_argparser():
 
     # Datset Options
     parser.add_argument("--input", type=str,
-                        default='E:/REVIEW_EXPERIMENT/For_Segmentation/Comparison/MHNet/Camvid_Firstfold',
+                        default='D:/Dataset/Camvid/camvid_sample_2/blur_new/camvid_firstfold_10_3_random_params',
                         # required=True
                         help="path to a single image or image directory")
     # parser.add_argument("--dataset", type=str, default='camvid',
@@ -51,7 +52,7 @@ def get_argparser():
 
     # Train Options
     parser.add_argument("--save_val_results_to",
-                        default='E:/REVIEW_EXPERIMENT/Output/Segmentation_output/MHNet/Camvid_Firstfold',
+                        default='E:/Second_paper/Result_Image/Segmentation/Camvid/Blurred/Firstfold/Secondproposed_withcodebook',
                         help="save segmentation results to the specified dir")
 
     parser.add_argument("--crop_val", action='store_true', default=False,
@@ -65,7 +66,7 @@ def get_argparser():
     #                     type=str,
     #                     help="resume from checkpoint")
     parser.add_argument("--ckpt",
-        default='D:/checkpoint/Segmentation/camvid/torch_deeplabv3plus/camvid_original/best_deeplabv3plus_resnet50_camvid_os16.pth',
+        default='E:/Second_paper/Checkpoint/Camvid/Blur_firstfold/Second_Proposed/Proposed/best_deeplabv3plus_resnet50_camvid_sample_os16.pth',
         type=str,
         help="resume from checkpoint")
 
@@ -147,7 +148,8 @@ def main():
         'deeplabv3plus_mobilenet': network.deeplabv3plus_mobilenet
     }
 
-    model = model_map[opts.model](num_classes=opts.num_classes, output_stride=opts.output_stride)
+    model = smp.UnetPlusPlus(encoder_name="resnet50", encoder_weights="imagenet", in_channels=3, classes=12)
+    # model = model_map[opts.model](num_classes=opts.num_classes, output_stride=opts.output_stride)
     # model = UNet_my_2(n_channels=3, n_classes=12, bilinear=True)
     # model = EdgeNet(n_channels=1, n_classes=2, bilinear=True)
 

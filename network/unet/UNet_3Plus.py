@@ -6,6 +6,7 @@ from .layers_unet3plus import unetConv2
 from .init_weights import init_weights
 from .unet_parts import *
 import torchvision.transforms as transforms
+import numpy as np
 '''
     UNet 3+
 '''

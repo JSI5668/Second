@@ -30,8 +30,8 @@ from network.unet import EdgeNet
 from network.unet import UNet_my_3
 from network.unet import W_Net
 from network.unet import MHNet_my, MHNet_my_2
-from network.unet import UNet_3Plus, UNet_3Plus_my, UNet_chae, encoder_my_2, decoder_my_2, UNet_chae_2
-
+from network.unet import UNet_3Plus, UNet_3Plus_my, UNet_chae, encoder_my_2, decoder_my_2
+import segmentation_models_pytorch as smp
 
 from PIL import Image
 import matplotlib
@@ -51,11 +51,11 @@ from ptflops import get_model_complexity_info
 
 # PATH_1 = 'E:/Second_paper/Checkpoint/Kitti/EdgeNet_Sobel/Firstfold_model/model.pt'
 # model_Edge = torch.load(PATH_1)
-# PATH_1 = 'E:/Second_paper/Checkpoint/Kitti/EdgeNet_Sobel/Secondfold_model/model.pt'
-# model_Edge = torch.load(PATH_1)
-
-PATH_1 = 'E:/Second_paper/Checkpoint/Mini_City/EdgeNet/Firstfold_model/model.pt'
+PATH_1 = 'E:/Second_paper/Checkpoint/Kitti/EdgeNet_Sobel/Secondfold_model/model.pt'
 model_Edge = torch.load(PATH_1)
+
+# PATH_1 = 'E:/Second_paper/Checkpoint/Camvid/EdgeNet_2_model/model.pt'
+# model_Edge = torch.load(PATH_1)
 
 train_nodes, eval_nodes = get_graph_node_names(model_Edge)
 
@@ -125,7 +125,7 @@ def get_argparser():
     # Datset Options
     # parser.add_argument("--data_root", type=str, default='./datasets/data',
     #                     help="path to Dataset")
-    parser.add_argument("--data_root", type=str, default='D:/Dataset/Camvid/camvid_sample_2/blur_new/camvid_firstfold_10_3_2',
+    parser.add_argument("--data_root", type=str, default='D:/Dataset/Camvid/camvid_sample_2/blur_new/camvid_firstfold_10_3_random_params',
                         help="path to Dataset")  ##crop size 바꿔주기
     # parser.add_argument("--data_root", type=str,
     #                     default='D:/Dataset/Camvid/camvid_original_240',
@@ -152,9 +152,9 @@ def get_argparser():
     #                     help="epoch number (default: 30k)")
     # parser.add_argument("--total_itrs", type=int, default=100e3,
     #                     help="epoch number (default: 30k)")
-    parser.add_argument("--total_itrs", type=int, default=87000,
+    parser.add_argument("--total_itrs", type=int, default=55000,
                         help="epoch number (default: 30k)")
-    parser.add_argument("--lr", type=float, default=0.0001,
+    parser.add_argument("--lr", type=float, default=0.01,
                         help="learning rate (default: 0.01)")
     parser.add_argument("--lr_policy", type=str, default='poly', choices=['poly', 'step'],
                         help="learning rate scheduler policy")
@@ -165,11 +165,11 @@ def get_argparser():
                         help='batch size (default: 16)')
     parser.add_argument("--val_batch_size", type=int, default=1,
                         help='batch size for validation (default: 4)')
-    parser.add_argument("--crop_size", type=int, default=240) ##513
-    # parser.add_argument("--crop_size", type=int, default=176)
+    parser.add_argument("--crop_size", type=int, default=192) ##513
+    # parser.add_argument("--crop_size", type=int, default=240)
     # parser.add_argument("--crop_size", type=int, default=256)##513
 
-    parser.add_argument("--ckpt", default='E:/Second_paper/Checkpoint/Camvid/Blur_firstfold/main_chae/main_chae_2/10/no_finetuning/best_deeplabv3plus_resnet50_camvid_sample_os16.pth', type=str,
+    parser.add_argument("--ckpt", default='E:/Second_paper/Checkpoint/Camvid/Blur_firstfold/Second_Proposed/Proposed/best_deeplabv3plus_resnet50_camvid_sample_os16.pth', type=str,
                         help="restore from checkpoint")
     # parser.add_argument("--ckpt",default='D:/checkpoint/Segmentation/camvid/torch_deeplabv3plus_secondfold/original/best_deeplabv3plus_resnet50_camvid_sample_os16.pth', type=str,
     #                     help="restore from checkpoint")
@@ -178,9 +178,9 @@ def get_argparser():
     # parser.add_argument("--ckpt", default='D:/checkpoint/Segmentation/kitti/original/secondfold/kitti/best_deeplabv3plus_resnet50_kitti_sample_os16.pth', type=str,
     #                     help="restore from checkpoint")
 
-    parser.add_argument("--ckpt_enc", default='E:/Second_paper/Checkpoint/Camvid/Blur_firstfold/main_chae/Pre_Restored/UNetmy_2_encoder_decoder_repectively/encoder_best/best_deeplabv3plus_resnet50_camvid_sample_os16.pth', type=str,
+    parser.add_argument("--ckpt_enc", default='E:/Second_paper/Checkpoint/Camvid/Blur_firstfold/main_chae/Pre_Restored/UNet2plusplus_pretrained_10_3_randomparam/Encoder/best_deeplabv3plus_resnet50_camvid_sample_os16.pth', type=str,
                         help="restore from checkpoint")
-    parser.add_argument("--ckpt_dec", default='E:/Second_paper/Checkpoint/Camvid/Blur_firstfold/main_chae/Pre_Restored/UNetmy_2_encoder_decoder_repectively/decoder_best/best_deeplabv3plus_resnet50_camvid_sample_os16.pth', type=str,
+    parser.add_argument("--ckpt_dec", default='E:/Second_paper/Checkpoint/Camvid/Blur_firstfold/main_chae/Pre_Restored/UNet2plusplus_pretrained_10_3_randomparam/Decoder/best_deeplabv3plus_resnet50_camvid_sample_os16.pth', type=str,
                         help="restore from checkpoint")
 
     parser.add_argument("--continue_training", action='store_true', default=True)
@@ -197,7 +197,7 @@ def get_argparser():
                         help="random seed (default: 1)")
     parser.add_argument("--print_interval", type=int, default=10,
                         help="print interval of loss (default: 10)")
-    parser.add_argument("--val_interval", type=int, default=87,
+    parser.add_argument("--val_interval", type=int, default=55,
                         help="epoch interval for eval (default: 100)")
     # parser.add_argument("--val_interval", type=int, default=87,
     #                     help="epoch interval for eval (default: 100)")
@@ -457,7 +457,7 @@ def validate(opts, model, loader, device, metrics, ret_samples_ids=None):
             images = images.to(device, dtype=torch.float32)
             labels = labels.to(device, dtype=torch.long)
 
-            outputs = model(images)[1]
+            outputs = model(images)
             preds = outputs.detach().max(dim=1)[1].cpu().numpy()
             targets = labels.cpu().numpy()
 
@@ -613,18 +613,32 @@ def main():
           (opts.dataset, len(train_dst), len(val_dst), len(test_dst)))
 
     # Set up model
-    model_enc_freeze = encoder_my_2(n_channels=3, bilinear=False)
-    checkpoint = torch.load(opts.ckpt_enc, map_location=torch.device('cpu'))
-    model_enc_freeze.load_state_dict(checkpoint["model_state"])
-    model_enc_freeze.cuda()
-    model_enc_freeze.eval()
-    for param in model_enc_freeze.parameters():
-        param.requires_grad_(False)
 
-    model = UNet_chae_2(n_channels=3, n_classes=12, bilinear=False)
+
+    model = smp.UnetPlusPlus(encoder_name="resnet50", encoder_weights="imagenet", in_channels=3, classes=12)
+    # model = UNet_chae_2(n_channels=3, n_classes=12, bilinear=False)
     # checkpoint = torch.load('E:/Second_paper/Checkpoint/Camvid/Blur_firstfold/main_chae/Pre_Restored/UNetmy_2_encoder_decoder_repectively/best_deeplabv3plus_resnet50_camvid_sample_os16.pth', map_location=torch.device('cuda'))
     # model.load_state_dict(checkpoint["model_state"])
     model.cuda()
+
+    # model_enc_freeze = model.encoder()
+    # checkpoint = torch.load(opts.ckpt_enc, map_location=torch.device('cpu'))
+    # model_enc_freeze.load_state_dict(checkpoint["model_state"])
+    # model_enc_freeze.cuda()
+    # model_enc_freeze.eval()
+    # for param in model_enc_freeze.parameters():
+    #     param.requires_grad_(False)
+
+    model_pre = smp.UnetPlusPlus(encoder_name="resnet50", encoder_weights="imagenet", in_channels=3, classes=12)
+    checkpoint = torch.load(
+        # 'E:/Second_paper/Checkpoint/Camvid/Blur_firstfold/main_chae/Pre_Restored/UNet2plusplus_pretrained_10_3_randomparam/best_deeplabv3plus_resnet50_camvid_sample_os16.pth',
+        'E:/Second_paper/Checkpoint/Kitti/Segmentation/Pre_restored/psf_30_using_SDAN-MD/best_deeplabv3plus_resnet50_kitti_sample_os16.pth',
+        map_location=torch.device('cuda'))
+    model_pre.load_state_dict(checkpoint["model_state"])
+    model_pre.cuda()
+    for param in model_pre.parameters():
+        param.requires_grad_(False)
+
 
     # for name, param in model.named_parameters():
     #     temp = name.find("enc")
@@ -653,9 +667,15 @@ def main():
     # optimizer = torch.optim.SGD(params=[
     #     {'params': model.backbone.parameters(), 'lr': 0.1*opts.lr},
     #     {'params': model.classifier.parameters(), 'lr': opts.lr},
-    # ], lr=opts.lr, momentum=0.9, weight_decay=opts.weight_decay)
+    # ], lr=opts.lr, momentum=0.9, weight_decay=opts.weight_deca
+    # )
+    optimizer = torch.optim.SGD(params=[
+        {'params': model.encoder.parameters(), 'lr': 0.1*opts.lr},
+        {'params': model.decoder.parameters(), 'lr': opts.lr},
+        {'params': model.segmentation_head.parameters(), 'lr': opts.lr},
+    ], lr=opts.lr, momentum=0.9, weight_decay=opts.weight_decay)
 
-    optimizer = optim.RMSprop(model.parameters(), lr=opts.lr, weight_decay=1e-8, momentum=0.9)
+    # optimizer = optim.RMSprop(model.parameters(), lr=opts.lr, weight_decay=1e-8, momentum=0.9)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'max', patience=2)  # goal: maximize Dice score
 
     #optimizer = torch.optim.SGD(params=model.parameters(), lr=opts.lr, momentum=0.9, weight_decay=opts.weight_decay)
@@ -825,28 +845,32 @@ def main():
                 labels = labels.to(device, dtype=torch.long)
 
                 optimizer.zero_grad()
-                freeze_enc_output_1, freeze_enc_output_2, freeze_enc_output_3, freeze_enc_output_4, freeze_enc_output_5  = model_enc_freeze(images)
-                training_enc_output_5, outputs = model(images)
+                freeze_enc_output_1, freeze_enc_output_2, freeze_enc_output_3, freeze_enc_output_4, freeze_enc_output_5, freeze_enc_output_6  = model_pre.encoder(images)
+                training_enc_output_1, training_enc_output_2, training_enc_output_3, training_enc_output_4, training_enc_output_5, training_enc_output_6 = model.encoder(images)
+                outputs = model(images)
 
-                enc_feature_map_loss = F.mse_loss(freeze_enc_output_5, training_enc_output_5)
+                enc_feature_map_loss_1 = F.mse_loss(freeze_enc_output_1, training_enc_output_1)
+                enc_feature_map_loss_2 = F.mse_loss(freeze_enc_output_2, training_enc_output_2)
+                enc_feature_map_loss_3 = F.mse_loss(freeze_enc_output_3, training_enc_output_3)
+                enc_feature_map_loss_4 = F.mse_loss(freeze_enc_output_4, training_enc_output_4)
+                enc_feature_map_loss_5 = F.mse_loss(freeze_enc_output_5, training_enc_output_5)
+                enc_feature_map_loss_6 = F.mse_loss(freeze_enc_output_6, training_enc_output_6)
 
-                loss = criterion(outputs, labels)
+                enc_featuremap_total_loss = enc_feature_map_loss_1 + enc_feature_map_loss_2 + enc_feature_map_loss_3 + enc_feature_map_loss_4 + enc_feature_map_loss_5 + enc_feature_map_loss_6
+                print(enc_featuremap_total_loss)
+                loss = criterion(outputs, labels) + enc_featuremap_total_loss
 
                 # print("enc_feature_map_loss: ", enc_feature_map_loss)
-                total_loss = loss + enc_feature_map_loss
 
 ###################################################################################
-                # pred = torch.max(outputs,1,keepdim=True)[0]
-                # labels = labels.to(device, dtype=torch.float32)
-                # labels = torch.unsqueeze(labels, 1)
-                # loss_perceptual = criterion_edge_perceptual(pred, labels)
-                #################################################################################
-                # print('loss:', loss)
-                # print('loss_perceptual:', loss_perceptual)
+                pred = torch.max(outputs,1,keepdim=True)[0]
+                labels = labels.to(device, dtype=torch.float32)
+                labels = torch.unsqueeze(labels, 1)
+                loss_perceptual = criterion_edge_perceptual(pred, labels)
+                ###############################################################################
+                loss = loss + 0.05 * loss_perceptual
 
-                # loss = loss + 0.05 * loss_perceptual
-
-                total_loss.backward()
+                loss.backward()
                 optimizer.step()
 
                 np_loss = loss.detach().cpu().numpy()
@@ -884,7 +908,7 @@ def main():
                 if (cur_itrs) % opts.val_interval == 0:
                     # save_ckpt('checkpoints/latest_%s_%s_os%d.pth' %
                     #           (opts.model, opts.dataset, opts.output_stride))
-                    save_ckpt('E:/Second_paper/Checkpoint/Camvid/Blur_firstfold/main_chae/main_chae_2/10/no_finetuning/latest_%s_%s_os%d.pth' %
+                    save_ckpt('E:/Second_paper/Checkpoint/Kitti/Segmentation/Blurred/Secondfold_5_012_random/Ablation/4page_not_codebook/latest_%s_%s_os%d.pth' %
                               (opts.model, opts.dataset, opts.output_stride))
                     print("validation...")
                     model.eval()
@@ -896,7 +920,7 @@ def main():
                         best_score = val_score['Mean IoU']
                         # save_ckpt('checkpoints/best_%s_%s_os%d.pth' %
                         #           (opts.model, opts.dataset,opts.output_stride))
-                        save_ckpt('E:/Second_paper/Checkpoint/Camvid/Blur_firstfold/main_chae/main_chae_2/10/no_finetuning/best_%s_%s_os%d.pth' %
+                        save_ckpt('E:/Second_paper/Checkpoint/Kitti/Segmentation/Blurred/Secondfold_5_012_random/Ablation/4page_not_codebook/best_%s_%s_os%d.pth' %
                                   (opts.model, opts.dataset, opts.output_stride))
 
                     if vis is not None:  # visualize validation score and samples
@@ -911,7 +935,7 @@ def main():
                             concat_img = np.concatenate((img, target, lbl), axis=2)  # concat along width
                             vis.vis_image('Sample %d' % k, concat_img)
 
-                    save_ckpt('E:/Second_paper/Checkpoint/Camvid/Blur_firstfold/main_chae/main_chae_2/10/no_finetuning/_%s_%s_%s_os%d.pth' %
+                    save_ckpt('E:/Second_paper/Checkpoint/Kitti/Segmentation/Blurred/Secondfold_5_012_random/Ablation/4page_not_codebook/_%s_%s_%s_os%d.pth' %
                               (cur_epochs, opts.model, opts.dataset, opts.output_stride))
                     model.train()
                 scheduler.step()
@@ -920,8 +944,8 @@ def main():
                     df_train_loss = pd.DataFrame(total_train_loss)
                     df_train_miou = pd.DataFrame(total_train_miou)
 
-                    df_train_miou.to_csv('E:/Second_paper/Checkpoint/Camvid/Blur_firstfold/main_chae/main_chae_2/10/no_finetuning/train_miou_2.csv', index=False)
-                    df_train_loss.to_csv('E:/Second_paper/Checkpoint/Camvid/Blur_firstfold/main_chae/main_chae_2/10/no_finetuning/train_loss_2.csv', index=False)
+                    df_train_miou.to_csv('E:/Second_paper/Checkpoint/Kitti/Segmentation/Blurred/Secondfold_5_012_random/Ablation/4page_not_codebook/train_miou_2.csv', index=False)
+                    df_train_loss.to_csv('E:/Second_paper/Checkpoint/Kitti/Segmentation/Blurred/Secondfold_5_012_random/Ablation/4page_not_codebook/train_loss_2.csv', index=False)
 
 
                     # plt.plot(total_train_miou)
